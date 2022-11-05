@@ -6,6 +6,8 @@ public class Node {
 
 	List<Node> next;
 	
+	String description;
+	
 	public Node() {
 		
 		
