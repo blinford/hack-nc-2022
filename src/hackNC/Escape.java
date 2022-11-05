@@ -10,7 +10,7 @@ public class Escape {
 	
 	public Escape() {
 
-		inventory = new ArrayList<Item>();
+		// inventory = new ArrayList<Item>();
 		
 		loadCommands();
 		loadZones();
@@ -22,8 +22,8 @@ public class Escape {
 		HELP("help - lists commands"),
 		NEXT("next - lists next locations"),
 		LOOK("look - looks around at current location"),
-		INV("inventory - shows contents of the inventory"),
-		GET("get (item) - removes item from current room and places it in your inventory"),
+		// INV("inventory - shows contents of the inventory"),
+		// GET("get (item) - removes item from current room and places it in your inventory"),
 		GO("go (location) - moves to specified location"),
 		EXAMINE("examine (item) - examines the specified item"),
 		READ("read (item) - reads the selected item");
@@ -40,7 +40,7 @@ public class Escape {
 	boolean newNode;
 	
 	// keeps track of inventory items
-	List<Item> inventory;
+	// List<Item> inventory;
 	
 	// the node 
 	
@@ -97,15 +97,19 @@ public class Escape {
 				case HELP:
 					runHelp();
 					break;
+					/*
 				case GET:
 					runGet(input);
 					break;
+					*/
 				case GO:
 					runGo(input);
 					break;
+					/*
 				case INV:
 					runInventory();
 					break;
+					*/
 				case EXAMINE:
 					runExamine(input);
 					break;
@@ -151,6 +155,7 @@ public class Escape {
 		}
 	}
 	
+	/*
 	private void runGet(String[] input) {
 		
 		for(Item item : node.items) {
@@ -172,7 +177,8 @@ public class Escape {
 		
 		System.out.println("item not found");
 	}
-
+	*/
+	
 	private void runGo(String[] input) {
 		
 		if(input.length <= 1) {
@@ -198,10 +204,13 @@ public class Escape {
 		System.out.println("location not found");
 	}
 	
+	/*
+	
 	private void runInventory() {
 		
 		
 	}
+	*/
 	
 	private void runExamine(String[] input) {
 		
@@ -253,18 +262,20 @@ public class Escape {
 
 		commandMap.put("help", Command.HELP);
 		
+		/*
+		commandMap.put("get", Command.GET);
+		commandMap.put("take", Command.GET);
+		commandMap.put("grab", Command.GET);
+		
 		commandMap.put("inventory", Command.INV);
 		commandMap.put("i", Command.INV);
+		*/
 
 		commandMap.put("look", Command.LOOK);
 		commandMap.put("l", Command.LOOK);
 		
 		commandMap.put("next", Command.NEXT);
 		commandMap.put("n", Command.NEXT);
-		
-		commandMap.put("get", Command.GET);
-		commandMap.put("take", Command.GET);
-		commandMap.put("grab", Command.GET);
 		
 		commandMap.put("go", Command.GO);
 
