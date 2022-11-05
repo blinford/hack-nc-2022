@@ -7,7 +7,6 @@ public class Node {
 	List<Node> next;
 	
 	public Node() {
-		System.out.println("test");
 		
 	}
 }

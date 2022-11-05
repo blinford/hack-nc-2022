@@ -27,7 +27,7 @@ public class HackNC {
 	}
 	
 	private static void loadZones() {
-		
+		System.out.println("test");
 		
 	}
 }
