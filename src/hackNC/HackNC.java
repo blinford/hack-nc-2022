@@ -7,5 +7,4 @@ public class HackNC {
 		Escape escape = new Escape();
 		escape.run();
 	}
-	
 }
