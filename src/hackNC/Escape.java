@@ -1,10 +1,20 @@
 package hackNC;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Escape {
+	
+	public Escape() {
+
+		inventory = new ArrayList<Item>();
+		
+		loadCommands();
+		loadZones();
+	}
 	
 	// enum to keep track of commands
 	private enum Command {
@@ -14,7 +24,9 @@ public class Escape {
 		LOOK("look - looks around at current location"),
 		INV("inventory - shows contents of the inventory"),
 		GET("get (item) - removes item from current room and places it in your inventory"),
-		GO("go (location) - moves to specified location");
+		GO("go (location) - moves to specified location"),
+		EXAMINE("examine (item) - examines the specified item"),
+		READ("read (item) - reads the selected item");
 		
 		String str;
 		
@@ -27,25 +39,45 @@ public class Escape {
 	Node node;
 	boolean newNode;
 	
+	// keeps track of inventory items
+	List<Item> inventory;
+	
+	// the node 
+	
 	// runs the game
-	public void run() {
-		
-		init();
+	public boolean run() {
 	
 		Scanner scan = new Scanner(System.in);
 		String[] input;
 		
 		boolean running = true;
+		
+		node = loadStart();
 		newNode = true;
 		
 		while(running) {
 			
 			if(newNode) {
 				
-				System.out.println(node.desc);
+				node.print();
 				newNode = false;
 			}
 			
+			System.out.println();
+			
+			if(node.next.size() == 0) {
+				
+				System.out.println("ENDING: "+node.endMessage+"\n");
+				
+				System.out.println("Keep Playing: y\\n?\n");
+				
+				if(scan.nextLine().equalsIgnoreCase("y"))
+					return true;
+				else
+					return false;
+			}
+			
+			System.out.print("> ");
 			input = scan.nextLine().split(" ", 2);
 			
 			if(commandMap.get(input[0]) == null) {
@@ -71,6 +103,15 @@ public class Escape {
 				case GO:
 					runGo(input);
 					break;
+				case INV:
+					runInventory();
+					break;
+				case EXAMINE:
+					runExamine(input);
+					break;
+				case READ:
+					runRead(input);
+					break;
 				default:
 					System.out.println("command not implemented");
 				}
@@ -78,22 +119,26 @@ public class Escape {
 		}
 		
 		scan.close();
+		
+		return false;
 	}
 	
 	private void runNext() {
 		
 		if(node.next.size() == 0)
-			System.out.println("no next");
+			System.out.println("no next locations found");
 		
-		for(int i = 0; i < node.next.size(); i++) {
+		int i = 0;
+		
+		for(String nxt : node.next.keySet()) {
 			
-			System.out.println(i+": "+node.next.get(i).name);
+			System.out.println(i+++": "+nxt);
 		}
 	}
 	
 	private void runLook() {
 		
-		System.out.println(node.desc);
+		node.print();
 	}
 	
 	private void runHelp() {
@@ -108,34 +153,96 @@ public class Escape {
 	
 	private void runGet(String[] input) {
 		
+		for(Item item : node.items) {
+			
+			if(item.name.equalsIgnoreCase(input[1])) {
+				
+				if(item.takeable) {
+					
+					node.removeItem(item);
+				}
+				else {
+					
+					System.out.println("cannot take item");
+				}
+				
+				return;
+			}
+		}
 		
+		System.out.println("item not found");
 	}
 
 	private void runGo(String[] input) {
 		
-		if(input.length >= 2) {
+		if(input.length <= 1) {
 			
-			String location = input[1];
+			System.out.println("expected location");
+			return;
+		}
+		
+		String location = input[1];
+		
+		int i = 0;
+		
+		for(String nxt : node.next.keySet()) {
 			
-			for(int i = 0; i < node.next.size(); i++) {
+			if(location.equals(i+++"") || location.equalsIgnoreCase(nxt)) {
 				
-				Node next = node.next.get(i);
-				
-				if(location.equals(i+"") || location.equals(next.name)) {
-					
-					node = next;
-					newNode = true;
-					return;
-				}
+				node = node.next.get(nxt);
+				newNode = true;
+				return;
 			}
 		}
 		
 		System.out.println("location not found");
 	}
-	private void init() {
+	
+	private void runInventory() {
 		
-		loadCommands();
-		loadZones();
+		
+	}
+	
+	private void runExamine(String[] input) {
+		
+		if(input.length == 1) {
+			
+			System.out.println("expected item");
+			return;
+		}
+		
+		for(Item item : node.items) {
+			
+			if(item.name.equalsIgnoreCase(input[1])) {
+				
+				item.printDescription();
+				return;
+			}
+		}
+		
+		System.out.println("item not found");
+	}
+	
+	private void runRead(String[] input) {
+		
+		for(Item item : node.items) {
+			
+			if(item.name.equalsIgnoreCase(input[1])) {
+				
+				if(item.readable) {
+					
+					item.printText();
+				}
+				else {
+					
+					System.out.println("cannot read item");
+				}
+				
+				return;
+			}
+		}
+		
+		System.out.println("item not found");
 	}
 	
 	Map<String, Command> commandMap;
@@ -148,6 +255,9 @@ public class Escape {
 		
 		commandMap.put("inventory", Command.INV);
 		commandMap.put("i", Command.INV);
+
+		commandMap.put("look", Command.LOOK);
+		commandMap.put("l", Command.LOOK);
 		
 		commandMap.put("next", Command.NEXT);
 		commandMap.put("n", Command.NEXT);
@@ -157,13 +267,87 @@ public class Escape {
 		commandMap.put("grab", Command.GET);
 		
 		commandMap.put("go", Command.GO);
+
+		commandMap.put("read", Command.READ);
+		
+		commandMap.put("examine", Command.EXAMINE);
 	}
 	
-	private void loadZones() {
+	private Node loadZones() {
 		
-		node = new Node("Starting Room", "This is the starting room.");
 		
-		node.next.add(new Node("Winner's Room", "You Won!"));
-		node.next.add(new Node("Loser's Room", "You Lost!"));
+		return node;
+	}
+	
+	private Node loadStart() {
+		
+		Node node = new Node("Auditorium", "You are standing in a large auditorium. There is a computer in front of you.");
+		
+		String text = "Hello Hackers!\n"
+				+ "Thank you for attending HackNC 2022!\n"
+				+ "We are so glad that you all came to join us, and we would once again like to apologize for destroying the fabric of space and time itself! Our hackers this year were so talented that they broke the universe, and now spacetime is arranged like a directed graph.\n"
+				+ "In other words, most space is connected to a number of other spaces, but only in one direction! This means that once you step into another area, there's no promise you'll be able to come back :)\n"
+				+ "Remember to submit feedback for this year's event so that next year's can be even better (if we make it back)! If you ever find yourself stuck, shout out \"help\" to think about what to do or \"next\" to see where you might go next.";
+		
+		Item computer = new Item("Computer", "There is some text on the screen. It almost looks like a portal...", text);
+		node.addItem(computer);
+		
+		node.addNext(loadComputer());
+	
+		return node;
+	}
+	
+	private Node loadComputer() {
+		
+		Node node = new Node("Inside the Computer", "You are standing in an immense forest of binary trees. You don't see any way out, but you see a door in a nearby tree.");
+		node.addNext("Door in the Tree", loadBST());
+		
+		return node;
+	}
+	
+	private Node loadBST() {
+		
+		// generate first room and items (poster and sign)
+		
+		Node node = new Node("Room of Eight", "There are two doors in front of you, and there is a poster on the wall.");
+		
+		Item poster = new Item("Poster", "The poster has writing on it.", "\"Welcome to the Binary Search Tree! If you want to make your way out, make sure to get to the Room of Four! By the way, left is smaller and right is bigger!\"");
+		node.addItem(poster);
+
+		// generate left room
+		
+		Node left = new Node("Room of Three", "There are two doors in front of you.");
+		node.addNext("Left Door", left);
+		
+		// generate right room
+		
+		Node right = new Node("Room of Ten", "You realize your mistake: 4 is smaller than 8.");
+		node.addNext("Right Door", right);
+		right.endMessage = "Lost in the Binary Search Forest";
+		
+		// generate left left room
+		
+		Node leftLeft = new Node("Room of One", "You realize your mistake: 4 is bigger than 3.");
+		left.addNext("Left Door", leftLeft);
+		leftLeft.endMessage = "Lost in the Binary Search Forest";
+		
+		// generate left right room
+		
+		Node leftRight = new Node("Room of Six", "There are two doors in front of you.");
+		left.addNext("Right Door", leftRight);
+		
+		// generate the LRL room (the correct one)
+		
+		Node LRL = new Node("Room of Four", "You made it to room 4!");
+		leftRight.addNext("Left Door", LRL);
+		LRL.endMessage = "Out of the (Binary) Woods";
+		
+		// generate the LRR room (the wrong one)
+		
+		Node LRR = new Node("Room of Seven", "You realize your mistake: 4 is smaller than 6.");
+		leftRight.addNext("Right Door", LRR);
+		LRR.endMessage = "Lost in the Binary Search Forest";
+		
+		return node;
 	}
 }
